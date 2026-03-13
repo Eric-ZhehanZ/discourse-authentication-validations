@@ -1,19 +1,14 @@
 import Component from "@glimmer/component";
-import { tracked } from "@glimmer/tracking";
 import { Input } from "@ember/component";
 import { service } from "@ember/service";
+import AdminFormRow from "discourse/admin/components/admin-form-row";
+import ValueList from "discourse/admin/components/value-list";
 import { withPluginApi } from "discourse/lib/plugin-api";
+import MultiSelect from "discourse/select-kit/components/multi-select";
 import { i18n } from "discourse-i18n";
-import AdminFormRow from "admin/components/admin-form-row";
-import ValueList from "admin/components/value-list";
-import MultiSelect from "select-kit/components/multi-select";
 
 export default class CustomUserFields extends Component {
   @service site;
-
-  @tracked userFieldsMinusCurrent = this.site.user_fields.filter(
-    (userField) => userField.id !== this.args.outletArgs.userField.id
-  );
 
   constructor() {
     super(...arguments);
@@ -25,6 +20,12 @@ export default class CustomUserFields extends Component {
         "value_validation_regex",
       ].forEach((property) => api.includeUserFieldPropertyOnSave(property));
     });
+  }
+
+  get userFieldsMinusCurrent() {
+    return this.site.user_fields.filter(
+      (userField) => userField.id !== this.args.outletArgs.userField.id
+    );
   }
 
   <template>
