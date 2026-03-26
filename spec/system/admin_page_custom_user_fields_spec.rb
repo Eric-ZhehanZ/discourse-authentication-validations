@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe "Discourse Authentication Validations - Admin Page - Custom User Fields",
-               type: :system do
+RSpec.describe "Discourse Authentication Validations - Admin Page - Custom User Fields" do
   fab!(:admin)
   fab!(:user_field_without_validation) do
     Fabricate(

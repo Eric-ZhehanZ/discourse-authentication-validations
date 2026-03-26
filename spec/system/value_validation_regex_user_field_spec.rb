@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe "Discourse Authentication Validation - Value Validation Regex - User Field",
-               type: :system do
+RSpec.describe "Discourse Authentication Validation - Value Validation Regex - User Field" do
   let(:signup_page) { PageObjects::Pages::Signup.new }
   fab!(:user_field_with_value_validation_regex) do
     Fabricate(

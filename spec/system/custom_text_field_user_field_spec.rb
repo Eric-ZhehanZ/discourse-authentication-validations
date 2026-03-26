@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe "Discourse Authentication Validation - Custom User Field - Text Field",
-               type: :system do
+RSpec.describe "Discourse Authentication Validation - Custom User Field - Text Field" do
   let(:custom_validation_page) { PageObjects::Pages::CustomValidation.new }
 
   fab!(:user_field_without_validation) do
