@@ -42,18 +42,55 @@ export default class UserFieldValidations extends Service {
       return;
     }
 
-    const nestedUserFields = this.site.user_fields
-      .filter((field) => hiddenTargetIds.includes(field.id))
-      .flatMap((nestedField) =>
-        this.site.user_fields.filter((field) =>
-          nestedField.target_user_field_ids.includes(field.id)
-        )
-      );
+    const nestedTargetIds = this._collectDescendantTargetIds(hiddenTargetIds);
+    const nestedUserFields = this.site.user_fields.filter((field) =>
+      nestedTargetIds.includes(field.id)
+    );
 
     nestedUserFields.forEach((field) => this._clearUserField(field));
     this._updateTargets(
       Object.fromEntries(nestedUserFields.map((field) => [field.id, false]))
     );
+  }
+
+  _collectDescendantTargetIds(startFieldIds) {
+    const visited = new Set();
+    const queue = [...startFieldIds];
+    const descendants = new Set();
+
+    while (queue.length) {
+      const currentId = queue.shift();
+
+      if (visited.has(currentId)) {
+        continue;
+      }
+
+      visited.add(currentId);
+      const field = this.site.user_fields.find((item) => item.id === currentId);
+
+      if (!field) {
+        continue;
+      }
+
+      this._allTargetIdsForField(field).forEach((targetId) => {
+        descendants.add(targetId);
+
+        if (!visited.has(targetId)) {
+          queue.push(targetId);
+        }
+      });
+    }
+
+    return [...descendants];
+  }
+
+  _allTargetIdsForField(userField) {
+    const legacyTargetIds = userField.target_user_field_ids || [];
+    const ruleTargetIds = (userField.visibility_rules || []).flatMap(
+      (rule) => rule.target_user_field_ids || []
+    );
+
+    return [...new Set([...legacyTargetIds, ...ruleTargetIds])];
   }
 
   _targetVisibilityMap(userField, value) {
@@ -133,11 +170,11 @@ export default class UserFieldValidations extends Service {
 
   _optionMatch(operator, value, values) {
     if (operator === "blank") {
-      return value === null || value === undefined || value === "";
+      return this._isBlankValue(value);
     }
 
     if (operator === "present") {
-      return value !== null && value !== undefined && value !== "";
+      return this._isPresentValue(value);
     }
 
     const normalizedValues = Array.isArray(value)
@@ -171,7 +208,15 @@ export default class UserFieldValidations extends Service {
       case "ends_with":
         return value.endsWith(firstValue);
       case "regex":
-        return firstValue ? new RegExp(firstValue).test(value) : false;
+        if (!firstValue) {
+          return false;
+        }
+
+        try {
+          return new RegExp(firstValue).test(value);
+        } catch {
+          return false;
+        }
       case "not_equals":
         return !values.includes(value);
       case "equals":
@@ -181,6 +226,14 @@ export default class UserFieldValidations extends Service {
   }
 
   _numberMatch(operator, value, values) {
+    if (operator === "blank") {
+      return this._isBlankValue(value);
+    }
+
+    if (operator === "present") {
+      return this._isPresentValue(value);
+    }
+
     const numericValue = Number(value);
 
     if (Number.isNaN(numericValue)) {
@@ -188,27 +241,55 @@ export default class UserFieldValidations extends Service {
     }
 
     const [left, right] = values.map((item) => Number(item));
+    const hasValidLeft = !Number.isNaN(left);
+    const hasValidRight = !Number.isNaN(right);
 
     switch (operator) {
       case "not_equals":
+        if (!hasValidLeft) {
+          return false;
+        }
         return numericValue !== left;
       case "gt":
+        if (!hasValidLeft) {
+          return false;
+        }
         return numericValue > left;
       case "gte":
+        if (!hasValidLeft) {
+          return false;
+        }
         return numericValue >= left;
       case "lt":
+        if (!hasValidLeft) {
+          return false;
+        }
         return numericValue < left;
       case "lte":
+        if (!hasValidLeft) {
+          return false;
+        }
         return numericValue <= left;
       case "between":
-        return !Number.isNaN(left) && !Number.isNaN(right) && numericValue >= left && numericValue <= right;
+        return hasValidLeft && hasValidRight && numericValue >= left && numericValue <= right;
       case "equals":
       default:
+        if (!hasValidLeft) {
+          return false;
+        }
         return numericValue === left;
     }
   }
 
   _dateMatch(operator, value, values) {
+    if (operator === "blank") {
+      return this._isBlankValue(value);
+    }
+
+    if (operator === "present") {
+      return this._isPresentValue(value);
+    }
+
     const currentDate = new Date(value);
 
     if (Number.isNaN(currentDate.getTime())) {
@@ -219,24 +300,56 @@ export default class UserFieldValidations extends Service {
     const leftTime = left?.getTime();
     const rightTime = right?.getTime();
     const currentTime = currentDate.getTime();
+    const hasValidLeft = !Number.isNaN(leftTime);
+    const hasValidRight = !Number.isNaN(rightTime);
 
     switch (operator) {
       case "not_equals":
+        if (!hasValidLeft) {
+          return false;
+        }
         return currentTime !== leftTime;
       case "gt":
+        if (!hasValidLeft) {
+          return false;
+        }
         return currentTime > leftTime;
       case "gte":
+        if (!hasValidLeft) {
+          return false;
+        }
         return currentTime >= leftTime;
       case "lt":
+        if (!hasValidLeft) {
+          return false;
+        }
         return currentTime < leftTime;
       case "lte":
+        if (!hasValidLeft) {
+          return false;
+        }
         return currentTime <= leftTime;
       case "between":
-        return !Number.isNaN(leftTime) && !Number.isNaN(rightTime) && currentTime >= leftTime && currentTime <= rightTime;
+        return hasValidLeft && hasValidRight && currentTime >= leftTime && currentTime <= rightTime;
       case "equals":
       default:
+        if (!hasValidLeft) {
+          return false;
+        }
         return currentTime === leftTime;
     }
+  }
+
+  _isBlankValue(value) {
+    if (Array.isArray(value)) {
+      return value.length === 0;
+    }
+
+    return value === null || value === undefined || value === "";
+  }
+
+  _isPresentValue(value) {
+    return !this._isBlankValue(value);
   }
 
   _legacyShouldShow(userField, value) {
