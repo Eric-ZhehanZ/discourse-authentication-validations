@@ -77,16 +77,17 @@ export default class UserFieldValidations extends Service {
   }
 
   _targetVisibilityMap(userField, value) {
-    const visibilityRules = userField.visibility_rules || [];
+    const visibilityRules =
+      userField.visibility_rules ?? userField.visibilityRules ?? [];
 
     if (visibilityRules.length) {
       return this._targetVisibilityMapFromRules(visibilityRules, value);
     }
 
     const shouldShow = this._legacyShouldShow(userField, value);
-    return Object.fromEntries(
-      userField.target_user_field_ids.map((id) => [id, shouldShow])
-    );
+    const targetIds =
+      userField.target_user_field_ids ?? userField.targetUserFieldIds ?? [];
+    return Object.fromEntries(targetIds.map((id) => [id, shouldShow]));
   }
 
   _targetVisibilityMapFromRules(rules, value) {
@@ -336,10 +337,11 @@ export default class UserFieldValidations extends Service {
   }
 
   _legacyShouldShow(userField, value) {
+    const showValues = userField.show_values ?? userField.showValues ?? [];
     let stringValue = value?.toString();
-    let shouldShow = userField.show_values.includes(stringValue);
+    let shouldShow = showValues.includes(stringValue);
 
-    if (value === null && userField.show_values.includes("null")) {
+    if (value === null && showValues.includes("null")) {
       shouldShow = true;
     }
 
