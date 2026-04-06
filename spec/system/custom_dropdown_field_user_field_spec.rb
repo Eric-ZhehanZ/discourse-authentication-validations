@@ -75,6 +75,47 @@ RSpec.describe "Discourse Authentication Validation - Custom User Field - Dropdo
     ) { user_field_options { [Fabricate(:user_field_option, value: "not a show_values value")] } }
   end
 
+  fab!(:user_field_visible_for_option_rule) do
+    Fabricate(
+      :user_field,
+      name: "visible_for_option_rule",
+      field_type: "dropdown",
+      editable: true,
+      required: false,
+      has_custom_validation: false,
+      show_values: [],
+      target_user_field_ids: [],
+    ) { user_field_options { [Fabricate(:user_field_option, value: "not a show_values value")] } }
+  end
+
+  fab!(:user_field_with_option_rules) do
+    Fabricate(
+      :user_field,
+      name: "with_option_rules",
+      field_type: "dropdown",
+      editable: true,
+      required: false,
+      has_custom_validation: true,
+      show_values: [],
+      target_user_field_ids: [],
+      visibility_rules: [
+        {
+          rule_type: "option",
+          operator: "equals",
+          values: ["show_validation"],
+          target_user_field_ids: [user_field_visible_for_option_rule.id],
+        },
+      ],
+    ) do
+      user_field_options do
+        [
+          Fabricate(:user_field_option, value: "not a show_values value"),
+          Fabricate(:user_field_option, value: "show_validation"),
+        ]
+      end
+    end
+  end
+
   before do
     SiteSetting.discourse_authentication_validations_enabled = true
     visit("/signup")
@@ -131,6 +172,20 @@ RSpec.describe "Discourse Authentication Validation - Custom User Field - Dropdo
         custom_validation_page.target_class(user_field_with_validation_2),
       )
       expect(page).to have_no_css(custom_validation_page.target_class(user_field_with_validation_1))
+    end
+  end
+
+  context "when advanced option rules are configured" do
+    it "shows and hides children based on option matches" do
+      custom_validation_page.select_show_validation_value(
+        custom_validation_page.target_class(user_field_with_option_rules),
+      )
+      expect(page).to have_css(custom_validation_page.target_class(user_field_visible_for_option_rule))
+
+      custom_validation_page.select_not_show_validation_value(
+        custom_validation_page.target_class(user_field_with_option_rules),
+      )
+      expect(page).to have_no_css(custom_validation_page.target_class(user_field_visible_for_option_rule))
     end
   end
 end

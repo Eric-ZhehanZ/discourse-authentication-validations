@@ -23,6 +23,7 @@ after_initialize do
   add_to_serializer(:user_field, :show_values) { object.show_values }
   add_to_serializer(:user_field, :target_user_field_ids) { object.target_user_field_ids }
   add_to_serializer(:user_field, :value_validation_regex) { object.value_validation_regex }
+  add_to_serializer(:user_field, :visibility_rules) { object.visibility_rules }
 
   register_modifier(:admin_user_fields_columns) do |columns|
     columns.push(
@@ -30,6 +31,7 @@ after_initialize do
       :show_values,
       :target_user_field_ids,
       :value_validation_regex,
+      :visibility_rules,
     )
     columns
   end

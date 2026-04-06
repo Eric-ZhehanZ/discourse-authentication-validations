@@ -2,3 +2,25 @@
 .target-user-field-ids-input {
   margin: 0.4em 0;
 }
+
+.visibility-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+.visibility-rules__rule {
+  border: 1px solid var(--primary-low);
+  border-radius: 0.5em;
+  padding: 1em;
+}
+
+.visibility-rules__row {
+  margin-bottom: 0.7em;
+
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.3em;
+  }
+}
