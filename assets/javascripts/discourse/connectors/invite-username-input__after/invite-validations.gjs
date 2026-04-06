@@ -13,12 +13,6 @@ export default class InviteValidations extends Component {
     return customValidationFields(controller?.userFields || []);
   }
 
-  constructor() {
-    super(...arguments);
-
-    this.userFieldValidations.setupCustomValidationFields(this.userFields);
-  }
-
   <template>
     {{#each this.userFields as |field|}}
       {{setupUserFieldValidation (hash field=field.field value=field.value)}}

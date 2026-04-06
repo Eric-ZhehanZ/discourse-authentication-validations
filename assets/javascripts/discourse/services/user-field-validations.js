@@ -1,4 +1,3 @@
-import { tracked } from "@glimmer/tracking";
 import { action } from "@ember/object";
 import { next } from "@ember/runloop";
 import Service, { service } from "@ember/service";
@@ -6,30 +5,14 @@ import Service, { service } from "@ember/service";
 export default class UserFieldValidations extends Service {
   @service site;
 
-  @tracked totalCustomValidationFields = 0;
-  currentCustomValidationFieldCount = 0;
-
-  @action
-  setupCustomValidationFields(userFields) {
-    this.totalCustomValidationFields = userFields.length;
-    this.currentCustomValidationFieldCount = 0;
-  }
-
   @action
   setValidation(userField, value) {
-    this._bumpTotalCustomValidationFields();
+    next(() => {
+      const targetVisibilityMap = this._targetVisibilityMap(userField, value);
 
-    if (
-      this.currentCustomValidationFieldCount ===
-      this.totalCustomValidationFields
-    ) {
-      next(() => {
-        const targetVisibilityMap = this._targetVisibilityMap(userField, value);
-
-        this._updateTargets(targetVisibilityMap);
-        this.hideNestedCustomValidations(targetVisibilityMap);
-      });
-    }
+      this._updateTargets(targetVisibilityMap);
+      this.hideNestedCustomValidations(targetVisibilityMap);
+    });
   }
 
   @action
@@ -364,25 +347,35 @@ export default class UserFieldValidations extends Service {
   }
 
   _clearUserField(userField) {
-    switch (userField.field_type) {
-      case "confirm":
-        userField.element.checked = false;
-        break;
-      case "dropdown":
-        userField.element.selectedIndex = 0;
-        break;
-      default:
-        userField.element.value = "";
-        break;
-    }
-  }
+    const className = `user-field-${userField.name
+      .toLowerCase()
+      .replace(/\s+/g, "-")}`;
+    const container = document.querySelector(`.${className}`);
 
-  _bumpTotalCustomValidationFields() {
-    if (
-      this.totalCustomValidationFields !==
-      this.currentCustomValidationFieldCount
-    ) {
-      this.currentCustomValidationFieldCount += 1;
+    if (!container) {
+      return;
+    }
+
+    switch (userField.field_type) {
+      case "confirm": {
+        const input = container.querySelector("input[type=checkbox]");
+        if (input) {
+          input.checked = false;
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        break;
+      }
+      case "dropdown":
+        // SelectKit dropdowns require Ember-level reset; skip DOM-only clearing
+        break;
+      default: {
+        const input = container.querySelector("input");
+        if (input) {
+          input.value = "";
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        break;
+      }
     }
   }
 }

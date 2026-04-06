@@ -11,12 +11,6 @@ export default class Validations extends Component {
     return customValidationFields(this.args.outletArgs.userFields);
   }
 
-  constructor() {
-    super(...arguments);
-
-    this.userFieldValidations.setupCustomValidationFields(this.userFields);
-  }
-
   <template>
     {{#each this.userFields as |field|}}
       {{setupUserFieldValidation (hash field=field.field value=field.value)}}
