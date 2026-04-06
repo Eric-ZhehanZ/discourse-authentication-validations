@@ -3,29 +3,25 @@ import { hash } from "@ember/helper";
 import { getOwner } from "@ember/owner";
 import { service } from "@ember/service";
 import setupUserFieldValidation from "../../helpers/setup-user-field-validation";
+import { customValidationFields } from "../../lib/user-field-validation-fields";
 
 export default class InviteValidations extends Component {
   @service userFieldValidations;
 
   get userFields() {
     const controller = getOwner(this).lookup("controller:invites/show");
-    return controller?.userFields || [];
+    return customValidationFields(controller?.userFields || []);
   }
 
   constructor() {
     super(...arguments);
 
-    this.userFieldValidations.totalCustomValidationFields =
-      this.userFields.filter(
-        (f) => f.field.has_custom_validation
-      ).length;
+    this.userFieldValidations.setupCustomValidationFields(this.userFields);
   }
 
   <template>
     {{#each this.userFields as |field|}}
-      {{#if field.field.has_custom_validation}}
-        {{setupUserFieldValidation (hash field=field.field value=field.value)}}
-      {{/if}}
+      {{setupUserFieldValidation (hash field=field.field value=field.value)}}
     {{/each}}
   </template>
 }

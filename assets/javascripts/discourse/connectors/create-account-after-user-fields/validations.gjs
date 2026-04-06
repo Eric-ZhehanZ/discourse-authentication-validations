@@ -2,24 +2,24 @@ import Component from "@glimmer/component";
 import { hash } from "@ember/helper";
 import { service } from "@ember/service";
 import setupUserFieldValidation from "../../helpers/setup-user-field-validation";
+import { customValidationFields } from "../../lib/user-field-validation-fields";
 
 export default class Validations extends Component {
   @service userFieldValidations;
 
+  get userFields() {
+    return customValidationFields(this.args.outletArgs.userFields);
+  }
+
   constructor() {
     super(...arguments);
 
-    this.userFieldValidations.totalCustomValidationFields =
-      this.args.outletArgs.userFields.filterBy(
-        "field.hasCustomValidation"
-      ).length;
+    this.userFieldValidations.setupCustomValidationFields(this.userFields);
   }
 
   <template>
-    {{#each @outletArgs.userFields as |field|}}
-      {{#if field.field.has_custom_validation}}
-        {{setupUserFieldValidation (hash field=field.field value=field.value)}}
-      {{/if}}
+    {{#each this.userFields as |field|}}
+      {{setupUserFieldValidation (hash field=field.field value=field.value)}}
     {{/each}}
   </template>
 }
