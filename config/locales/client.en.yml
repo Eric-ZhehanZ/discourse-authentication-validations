@@ -16,5 +16,35 @@ en:
       value_validation_regex:
         label: "Value Validation Regex"
         description: "The regular expression that the value must match (only applicable to text fields)"
+      visibility_rules:
+        label: "Visibility Rules"
+        description: "Create one or more rules that decide which fields are visible. Each rule can target different fields."
+        add: "Add visibility rule"
+        remove: "Remove rule"
+        rule_type: "Rule type"
+        operator: "Condition"
+        values: "Match values"
+        visible_fields: "Visible fields"
+        rule_type_options:
+          text: "Text"
+          option: "Option"
+          number: "Number"
+          date: "Date"
+        operators:
+          equals: "Equals"
+          not_equals: "Does not equal"
+          contains: "Contains"
+          starts_with: "Starts with"
+          ends_with: "Ends with"
+          regex: "Regex match"
+          includes_any: "Includes any"
+          excludes_all: "Excludes all"
+          blank: "Is blank"
+          present: "Is present"
+          gt: "Greater than"
+          gte: "Greater than or equal"
+          lt: "Less than"
+          lte: "Less than or equal"
+          between: "Between"
       value_validation_error_message: |
         Please enter a valid %{user_field_name}

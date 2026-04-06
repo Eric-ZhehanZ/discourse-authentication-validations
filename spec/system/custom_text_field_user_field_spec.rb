@@ -68,6 +68,60 @@ RSpec.describe "Discourse Authentication Validation - Custom User Field - Text F
     )
   end
 
+
+  fab!(:user_field_visible_for_contains) do
+    Fabricate(
+      :user_field,
+      name: "visible_for_contains",
+      field_type: "text",
+      editable: true,
+      required: false,
+      has_custom_validation: false,
+      show_values: [],
+      target_user_field_ids: [],
+    )
+  end
+
+  fab!(:user_field_visible_for_exact_match) do
+    Fabricate(
+      :user_field,
+      name: "visible_for_exact_match",
+      field_type: "text",
+      editable: true,
+      required: false,
+      has_custom_validation: false,
+      show_values: [],
+      target_user_field_ids: [],
+    )
+  end
+
+  fab!(:user_field_with_advanced_rules) do
+    Fabricate(
+      :user_field,
+      name: "with_advanced_rules",
+      field_type: "text",
+      editable: true,
+      required: false,
+      has_custom_validation: true,
+      show_values: [],
+      target_user_field_ids: [],
+      visibility_rules: [
+        {
+          rule_type: "text",
+          operator: "contains",
+          values: ["foo"],
+          target_user_field_ids: [user_field_visible_for_contains.id],
+        },
+        {
+          rule_type: "text",
+          operator: "equals",
+          values: ["bar"],
+          target_user_field_ids: [user_field_visible_for_exact_match.id],
+        },
+      ],
+    )
+  end
+
   before do
     SiteSetting.discourse_authentication_validations_enabled = true
     visit("/signup")
@@ -155,4 +209,25 @@ RSpec.describe "Discourse Authentication Validation - Custom User Field - Text F
       ).to have_text("")
     end
   end
+
+  context "when advanced visibility rules are configured" do
+    it "shows different target fields based on different text rule matches" do
+      page.find(custom_validation_page.target_class(user_field_with_advanced_rules)).fill_in(
+        with: "foo content",
+      )
+
+      expect(page).to have_css(custom_validation_page.target_class(user_field_visible_for_contains))
+      expect(page).to have_no_css(
+        custom_validation_page.target_class(user_field_visible_for_exact_match),
+      )
+
+      page.find(custom_validation_page.target_class(user_field_with_advanced_rules)).fill_in(with: "bar")
+
+      expect(page).to have_no_css(custom_validation_page.target_class(user_field_visible_for_contains))
+      expect(page).to have_css(
+        custom_validation_page.target_class(user_field_visible_for_exact_match),
+      )
+    end
+  end
+
 end
