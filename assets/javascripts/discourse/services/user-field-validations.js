@@ -9,6 +9,13 @@ export default class UserFieldValidations extends Service {
   @tracked totalCustomValidationFields = 0;
   currentCustomValidationFieldCount = 0;
 
+
+  @action
+  setupCustomValidationFields(userFields) {
+    this.totalCustomValidationFields = userFields.length;
+    this.currentCustomValidationFieldCount = 0;
+  }
+
   @action
   setValidation(userField, value) {
     this._bumpTotalCustomValidationFields();
@@ -59,7 +66,11 @@ export default class UserFieldValidations extends Service {
         .toLowerCase()
         .replace(/\s+/g, "-")}`;
       const userFieldElement = document.querySelector(`.${className}`);
-      if (userFieldElement && !shouldShow) {
+      if (!userFieldElement) {
+        return;
+      }
+
+      if (!shouldShow) {
         // Clear and hide nested fields
         userFieldElement.style.display = "none";
         this._clearUserField(userField);
